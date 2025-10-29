@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+.chessboard {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  width: min(90vw, 560px);
+  height: min(90vw, 560px);
+  max-width: 560px;
+  max-height: 560px;
+  border: 8px solid #2c1810;
+  box-shadow: 
+    0 0 30px rgba(0, 0, 0, 0.7),
+    inset 0 0 20px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(145deg, #3b2f2f, #2c1810);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add subtle wood grain texture */
+.chessboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 1px, transparent 1px),
+    radial-gradient(circle at 70% 70%, rgba(0,0,0,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+
+/* Light and dark squares with better contrast for black pieces */
+.square.light {
+  background: linear-gradient(135deg, #f0d9b5, #e6c9a0);
+  position: relative;
+}
+
+.square.dark {
+  background: linear-gradient(135deg, #7d5d38, #6b4c2c);
+  position: relative;
+}
+
+/* Alternative dark square colors for better visibility:
+   Choose one of these options: */
+
+/* Option 1: Rich chocolate brown */
+.square.dark.option1 {
+  background: linear-gradient(135deg, #8b6b4d, #6d4c35);
+}
+
+/* Option 2: Deep walnut */
+.square.dark.option2 {
+  background: linear-gradient(135deg, #755839, #5a4128);
+}
+
+/* Option 3: Dark coffee - best contrast for black pieces */
+.square.dark {
+  background: linear-gradient(135deg, #8b6b4d, #6d4c35);
+}
+
+/* Add subtle grain to squares */
+.square.light::before,
+.square.dark::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 0%,
+    rgba(255,255,255,0.1) 50%,
+    transparent 100%
+  );
+  opacity: 0.3;
+}
+
+/* Squares setup */
+.square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(28px, 4vw, 42px);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  cursor: pointer;
+}
+
+/* Enhanced hover effects */
+.square:hover {
+  transform: scale(1.02);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.3),
+    0 0 8px rgba(255, 215, 0, 0.4);
+  z-index: 2;
+}
+
+/* Valid move indicator */
+.square.valid-move::after {
+  content: '';
+  position: absolute;
+  width: 20%;
+  height: 20%;
+  background: rgba(0, 255, 0, 0.4);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.6);
+}
+
+/* Selected square */
+.square.selected {
+  box-shadow: 
+    inset 0 0 20px rgba(255, 215, 0, 0.6),
+    0 0 15px rgba(255, 215, 0, 0.4);
+  transform: scale(1.03);
+  z-index: 1;
+}
+
+/* Pieces with enhanced styling and better contrast */
+.piece {
+  font-size: clamp(36px, 5vw, 48px);
+  cursor: grab;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.piece.white {
+  color: #f8f4e9;
+  filter: 
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+}
+
+.piece.black {
+  color: #0a0a0a; /* Darker black for better visibility */
+  filter: 
+    drop-shadow(0 2px 4px rgba(255, 255, 255, 0.4)) /* White shadow for contrast */
+    drop-shadow(0 0 3px rgba(255, 255, 255, 0.3))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+  text-shadow: 
+    0 1px 2px rgba(255, 255, 255, 0.5),
+    0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+/* Enhanced hover for pieces */
+.piece:hover {
+  transform: scale(1.1);
+  filter: brightness(1.1) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.8));
+}
+
+.piece.black:hover {
+  filter: 
+    brightness(1.2)
+    drop-shadow(0 3px 5px rgba(255, 255, 255, 0.5))
+    drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+}
+
+/* Dragging state */
+.piece.dragging {
+  opacity: 0.9;
+  transform: scale(1.15) rotate(5deg);
+  filter: 
+    brightness(1.2)
+    drop-shadow(0 5px 8px rgba(0, 0, 0, 0.8))
+    drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+  z-index: 1000;
+  cursor: grabbing !important;
+}
+
+.piece.black.dragging {
+  filter: 
+    brightness(1.3)
+    drop-shadow(0 5px 8px rgba(255, 255, 255, 0.6))
+    drop-shadow(0 0 12px rgba(255, 215, 0, 0.5))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+}
+
+/* Board flip animations */
+.flipped {
+  transform: rotate(180deg);
+  transition: transform 0.6s ease;
+}
+
+.flipped .piece {
+  transform: rotate(180deg);
+  transition: transform 0.6s ease;
+}
+
+.flipped .square {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Last move highlight */
+.square.last-move {
+  background: linear-gradient(135deg, rgba(255, 255, 0, 0.3), rgba(255, 200, 0, 0.2));
+}
+
+/* Check highlight */
+.square.check {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.4), rgba(200, 0, 0, 0.3));
+  animation: pulse-check 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-check {
+  0%, 100% { box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.3); }
+  50% { box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.6); }
+}
+
+/* Coordinate labels */
+.coordinate {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.coordinate.file {
+  bottom: 2px;
+  right: 4px;
+}
+
+.coordinate.rank {
+  top: 2px;
+  left: 4px;
+}
+
+.square.dark .coordinate {
+  color: rgba(255, 255, 255, 0.8); /* Better contrast on dark squares */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chessboard {
+    width: min(95vw, 400px);
+    height: min(95vw, 400px);
+    border-width: 4px;
+  }
+  
+  .piece {
+    font-size: clamp(28px, 8vw, 36px);
+  }
+}
+
+@media (max-width: 480px) {
+  .chessboard {
+    width: min(98vw, 320px);
+    height: min(98vw, 320px);
+  }
+  
+  .square {
+    font-size: 24px;
+  }
+  
+  .piece {
+    font-size: 28px;
+  }
+}
+</style>
+
+</head>
+<body>
+
+    <div class="w-full h-screen flex flex-col items-center justify-center bg-zinc-900 text-white">
+  
+  <!-- Heading -->
+  <h1 class="text-5xl font-bold mb-6 tracking-wider">Play Chess</h1>
+
+  <!-- Chessboard -->
+  <div class="chessboard w-96 h-96 bg-red-400 border-8 border-amber-700 rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.7)]"></div>
+  
+</div>
+
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" 
+    integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" 
+    crossorigin="anonymous"></script>
+
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js" 
+   integrity="sha512-xRllwz2gdZciIB+AkEbeq+gVhX8VB8XsfqeFbUh+SzHlN96dEduwtTuVuc2u9EROlmW9+yhRlxjif66ORpsgVA==" 
+   crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src = "/js/chessgame.js"></script>
+</body>
+</html>
+
